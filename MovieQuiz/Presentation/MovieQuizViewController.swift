@@ -76,7 +76,8 @@ final class MovieQuizViewController: UIViewController {
         let firstquestion = questions[0]
         let viewModel = convert(model: firstquestion)
         show(quiz: viewModel)
-        
+        imageView.layer.borderColor = nil
+        imageView.layer.borderWidth = 0
     }
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         let questionStep = QuizStepViewModel(
@@ -105,29 +106,29 @@ final class MovieQuizViewController: UIViewController {
         imageView.layer.cornerRadius = 20
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-               self.showNextQuestionOrResult()
-           }
+            self.showNextQuestionOrResult()
+        }
     }
     private func show(quiz result: QuizResultsViewModel) {
         let alert = UIAlertController(
-                title: result.title,
-                message: result.text,
-                preferredStyle: .alert)
+            title: result.title,
+            message: result.text,
+            preferredStyle: .alert)
+        
+        let action = UIAlertAction(title: result.buttonText, style: .default) { _ in
             
-            let action = UIAlertAction(title: result.buttonText, style: .default) { _ in
-
-
-                self.currentQuestionIndex = 0
-                self.correctAnswers = 0
-                
-                let firstQuestion = self.questions[self.currentQuestionIndex]
-                let viewModel = self.convert(model: firstQuestion)
-                self.show(quiz: viewModel)
-            }
             
-            alert.addAction(action)
+            self.currentQuestionIndex = 0
+            self.correctAnswers = 0
             
-            self.present(alert, animated: true, completion: nil)
+            let firstQuestion = self.questions[self.currentQuestionIndex]
+            let viewModel = self.convert(model: firstQuestion)
+            self.show(quiz: viewModel)
+        }
+        
+        alert.addAction(action)
+        
+        self.present(alert, animated: true, completion: nil)
     }
     private func showNextQuestionOrResult() {
         if currentQuestionIndex == questionsCount - 1 {
@@ -138,9 +139,11 @@ final class MovieQuizViewController: UIViewController {
                 buttonText: "Сыграть ещё раз")
             show(quiz: viewModel)
             imageView.layer.borderColor = nil
+            imageView.layer.borderWidth = 0
         } else {
             currentQuestionIndex += 1
             imageView.layer.borderColor = nil
+            imageView.layer.borderWidth = 0
             let nextQuestion = questions[currentQuestionIndex]
             let viewModel = convert(model: nextQuestion)
             show(quiz: viewModel)
