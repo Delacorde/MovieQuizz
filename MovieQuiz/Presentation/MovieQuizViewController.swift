@@ -2,6 +2,9 @@ import UIKit
 import Foundation
 final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
+    
+    @IBOutlet private weak var activityIndicator: UIActivityIndicatorView!
+    
     @IBOutlet private weak var imageView: UIImageView!
     
     
@@ -35,13 +38,15 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        questionFactory = QuestionFactory(delegate: self)
-        questionFactory?.requestNextQuestion()
+        questionFactory = QuestionFactory(delegate: self, moviesLoader: MoviesLoader())
         imageView.layer.borderColor = nil
         imageView.layer.borderWidth = 0
         statisticService = StatisticService()
+        showLoadingIndicator()
+        questionFactory?.loadData()
     }
     // MARK: - QuestionFactoryDelegate
+    
     func didReceiveNextQuestion(question: QuizQuestion?) {
         guard let question = question else {
             return
@@ -55,13 +60,36 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             self?.show(quiz: viewModel)
         }
     }
+    private func hideLoadingIndicator(){
+        activityIndicator.isHidden = true
+    }
+    private func showNetworkError(message: String) {
+        hideLoadingIndicator()
+        
+        let model = AlertModel(title: "Ошибка",
+                               message: message,
+                               buttonText: "Попробовать еще раз") { [weak self] in
+            guard let self = self else { return }
+            
+            self.currentQuestionIndex = 0
+            self.correctAnswers = 0
+            
+            self.questionFactory?.requestNextQuestion()
+        }
+        
+        alertPresenter.show(in: self, model: model)
+    }
+    private func showLoadingIndicator() {
+        activityIndicator.isHidden = false
+        activityIndicator.startAnimating()
+    }
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
-        let questionStep = QuizStepViewModel(
-            image: UIImage(named: model.image) ?? UIImage(),
+        return QuizStepViewModel(
+            image: UIImage(data: model.image) ?? UIImage(),
             question: model.text,
             questionNumber: "\(currentQuestionIndex + 1)/ \(questionsAmount)")
-        return questionStep
     }
+    
     private func show(quiz step: QuizStepViewModel) {
         imageView.image = step.image
         textLabel.text = step.question
@@ -80,7 +108,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         
         let model = AlertModel(title: result.title, message: alertMessage, buttonText: result.buttonText) { [weak self] in
             guard let self = self else { return }
-
+            
             self.currentQuestionIndex = 0
             self.correctAnswers = 0
             self.questionFactory?.requestNextQuestion()
@@ -107,6 +135,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             guard let self = self else {return}
             self.showNextQuestionOrResult()
         }
+        
+        
     }
     private func showNextQuestionOrResult() {
         if currentQuestionIndex == questionsAmount - 1 {
@@ -118,7 +148,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
                 text: text,
                 buttonText: "Сыграть ещё раз")
             statisticService.store(correct: correctAnswers, total: questionsAmount)
-
+            
             show(quiz: viewModel)
             imageView.layer.borderColor = nil
             imageView.layer.borderWidth = 0
@@ -129,6 +159,13 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             questionFactory?.requestNextQuestion()
             
         }
+    }
+    func didLoadDataFromServer() {
+        activityIndicator.isHidden = true
+        questionFactory?.requestNextQuestion()
+    }
+    func didFailToLoadData(with error: Error){
+        showNetworkError(message: error.localizedDescription)
     }
 }
 
