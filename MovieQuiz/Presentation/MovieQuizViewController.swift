@@ -3,7 +3,7 @@ import Foundation
 final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     
-    @IBOutlet private weak var activityIndicator: UIActivityIndicatorView!
+    @IBOutlet private weak var activityIndicator: UIActivityIndicatorView?
     
     @IBOutlet private weak var imageView: UIImageView!
     
@@ -61,15 +61,16 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         }
     }
     private func hideLoadingIndicator(){
-        activityIndicator.isHidden = true
+        activityIndicator?.isHidden = true
     }
     private func showNetworkError(message: String) {
         hideLoadingIndicator()
-        
-        let model = AlertModel(title: "Ошибка",
+        let errorString = "Ошибка"
+        let buttonText = "Попробовать еще раз?"
+        let model = AlertModel(title: errorString,
                                message: message,
-                               buttonText: "Попробовать еще раз") { [weak self] in
-            guard let self = self else { return }
+                               buttonText: buttonText) { [weak self] in
+            guard let self else {return}
             
             self.currentQuestionIndex = 0
             self.correctAnswers = 0
@@ -80,8 +81,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         alertPresenter.show(in: self, model: model)
     }
     private func showLoadingIndicator() {
-        activityIndicator.isHidden = false
-        activityIndicator.startAnimating()
+        activityIndicator?.isHidden = false
+        activityIndicator?.startAnimating()
     }
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         return QuizStepViewModel(
@@ -161,7 +162,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         }
     }
     func didLoadDataFromServer() {
-        activityIndicator.isHidden = true
+        activityIndicator?.isHidden = true
         questionFactory?.requestNextQuestion()
     }
     func didFailToLoadData(with error: Error){
